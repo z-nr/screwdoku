@@ -1,5 +1,5 @@
 require_relative "tile"
-
+require "byebug"
 class Board
   attr_reader :grid
 
@@ -11,10 +11,10 @@ class Board
   end
 
   def self.from_file(filename)
-    rows = File.readlines("filename").map(:chomp)
+    rows = File.readlines(filename).map(&:chomp)
     tiles = rows.map do |row|
-      nums = row.split("").map { |char| parseInt(char) }
-      nums.map { |num| Tle.new(num) }
+      nums = row.split("").map { |char| Integer(char) }
+      nums.map { |num| Tile.new(num) }
     end
 
     self.new(tiles)
@@ -25,22 +25,21 @@ class Board
   end
 
   def [](pos)
-    pos = x,y
+    x, y = pos
     grid[x][y]
   end
 
   def []=(pos, value)
     x, y = pos
     tile = grid[x][y]
-    tile.value = new_value
+    tile.value = value
   end
 
   def columns
-    rows.transpose!
+    rows.transpose
   end
 
   def render
-    puts "(0..8).to_a.join(" ")"
     grid.each_with_index do |row, i|
       puts "#{i} #{row.join(" ")}"
     end
@@ -51,9 +50,10 @@ class Board
     grid.size
   end
 
-  alias_method :rows, :size
+  alias_method :rows, :grid
 
   def solved?
+    #byebug
     rows.all? { |row| solved_set?(row) } &&
       columns.all? { |col| solved_set?(col) } &&
       squares.all? { |square| solved_set?(square) }
@@ -61,17 +61,18 @@ class Board
 
   def solved_set?(tiles)
     nums = tiles.map(&:value)
-    nums.sort == (1..9)
+    nums.sort == (1..9).to_a
   end
 
   def square(idx)
     tiles = []
     x = (idx / 3) * 3
-    y = (idx % 3) * 3
+    y = (idx / 3) * 3
+    #byebug
 
-    (x..x + 3).each do |j|
-      (y..y + 3).each do |i|
-        tiles << self[i, j]
+    (x..(x + 2)).each do |j|
+      (y..(y + 2)).each do |i|
+        tiles << self[[i, j]]
       end
     end
 
@@ -79,7 +80,7 @@ class Board
   end
 
   def squares
-    (0..8).to_a.each { |i| square(i) }
+    (0..8).to_a.map { |i| square(i) }
   end
 
 end
